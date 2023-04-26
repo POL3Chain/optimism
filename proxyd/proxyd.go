@@ -206,9 +206,9 @@ func Start(config *Config) (*Server, func(), error) {
 		blockNumLVC *EthLastValueCache
 		gasPriceLVC *EthLastValueCache
 	)
+	var cache Cache
 	if config.Cache.Enabled {
 		var (
-			cache      Cache
 			blockNumFn GetLatestBlockNumFn
 			gasPriceFn GetLatestGasPriceFn
 		)
@@ -309,6 +309,12 @@ func Start(config *Config) (*Server, func(), error) {
 
 			if config.BackendGroups[bgName].ConsensusAsyncHandler == "noop" {
 				copts = append(copts, WithAsyncHandler(NewNoopAsyncHandler()))
+			}
+			if config.Cache.Enabled {
+				copts = append(copts, WithListener(func() {
+					err := cache.Clear(context.Background())
+					log.Warn("error invalidating cache", "err", err)
+				}))
 			}
 			cp := NewConsensusPoller(bg, copts...)
 			bg.Consensus = cp

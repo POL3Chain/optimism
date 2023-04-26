@@ -118,6 +118,11 @@ func TestConsensus(t *testing.T) {
 		h1.ResetOverrides()
 		h2.ResetOverrides()
 
+		listenerCalled := false
+		bg.Consensus.AddListener(func() {
+			listenerCalled = true
+		})
+
 		for _, be := range bg.Backends {
 			bg.Consensus.UpdateBackend(ctx, be)
 		}
@@ -163,7 +168,7 @@ func TestConsensus(t *testing.T) {
 		// should resolve to 0x1, since 0x2 is out of consensus at the moment
 		require.Equal(t, "0x1", bg.Consensus.GetConsensusBlockNumber().String())
 
-		// later, when impl events, listen to broken consensus event
+		require.True(t, listenerCalled)
 	})
 
 	t.Run("broken consensus with depth 2", func(t *testing.T) {
